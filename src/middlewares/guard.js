@@ -10,7 +10,7 @@ function authGuard(required = true) {
             if (!required) return;
             return reply.status(401).send({
                 code: 0,
-                error: "Missing Bearer token",
+                message: "Missing Bearer token",
             });
         }
 
@@ -18,7 +18,7 @@ function authGuard(required = true) {
         if(!decoded || !decoded.id || !decoded.email) {
             return reply.status(401).send({
                 code: 0,
-                error: "Invalid token payload",
+                message: "Invalid token payload",
             });
         }
 
@@ -26,7 +26,7 @@ function authGuard(required = true) {
         if (!user) {
             return reply.status(401).send({
                 code: 0,
-                error: "user not found",
+                message: "user not found",
             });
         }
 
@@ -37,7 +37,7 @@ function authGuard(required = true) {
 
       return reply.status(401).send({
         code: 0,
-        error: "Invalid or expired token",
+        message: "Invalid or expired token",
       });
     }
   };

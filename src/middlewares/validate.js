@@ -11,7 +11,7 @@ function validate(schema, property = "body") {
     if (error) {
       return reply.status(400).send({
         code: 0,
-        error: error.details.map((d) => d.message).join("; ")
+        message: error.details.map((d) => d.message).join("; ")
       });
     }
 
