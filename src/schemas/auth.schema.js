@@ -13,6 +13,18 @@ const loginSchema = Joi.object({
     .required()
 });
 
+const languageSchema = Joi.object({
+  code: Joi.string()
+    .length(2)
+    .lowercase()
+    .trim()
+    .required()
+});
+
+
+
+
 module.exports = {
-  loginSchema
+  loginSchema,
+  languageSchema
 };

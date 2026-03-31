@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const { findUser, updateSession } = require("../repositories/auth.repository");
+const { findUser, updateSession, findLanguage } = require("../repositories/auth.repository");
 
 async function AuthService(req) {
   try {
@@ -91,7 +91,37 @@ async function GetUserService(req) {
   }
 }
 
+async function GetLanguageService(req) {
+  try {
+    const _body = req.query;
+
+    const find_user = await findLanguage(req.server, _body.code);
+    if(!find_user) {
+      return {
+        code: 0,
+        message: "Language not found."
+      };
+    }
+
+    return {
+      code: 1,
+      data: find_user
+    };
+
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? `${error.message} "GetLanguageService Unknown error"`
+        : "GetLanguageService Unknown error";
+
+    return {
+      code: 0,
+      message
+    };
+  }
+}
 module.exports = { 
   AuthService,
-  GetUserService
+  GetUserService,
+  GetLanguageService
 };

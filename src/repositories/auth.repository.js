@@ -65,9 +65,23 @@ async function updateSession(app, token, id) {
   }
 }
 
+async function findLanguage(app, code) {
+  try {
+    const query = `select json FROM app.t_languages where code = $1 LIMIT 1`;
+
+    const { rows } = await app.db.query(query, [code]);
+    return rows[0] ?? null;
+  } catch (error) {
+    console.log(error)
+    app.log.error({ error }, "findLanguage failed");
+    return null;
+  }
+}
+
 module.exports = {
   findUser,
   findUserById,
   updateSession,
-  findUserByIdToken
+  findUserByIdToken,
+  findLanguage
 };
