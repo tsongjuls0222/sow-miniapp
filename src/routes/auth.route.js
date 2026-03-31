@@ -1,4 +1,4 @@
-const { LoginController, GetUserController, GetLanguageController } = require("../controllers/auth.controller");
+const { LoginController, GetUserController, GetLanguageController, LogoutController } = require("../controllers/auth.controller");
 const { loginSchema, languageSchema } = require("../schemas/auth.schema");
 const validate = require("../middlewares/validate");
 const {authGuard} = require("../middlewares/guard");
@@ -10,6 +10,14 @@ async function authRoutes(app) {
       preValidation: [validate(loginSchema, "body")]
     },
     LoginController
+  );
+
+  app.post(
+    "/logout",
+    {
+      preHandler: [authGuard(true)]
+    },
+    LogoutController
   );
 
   app.get(

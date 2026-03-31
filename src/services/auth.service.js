@@ -121,8 +121,45 @@ async function GetLanguageService(req) {
   }
 }
 
+async function LogoutService(req) {
+  try {
+    if(!req.currentUser) {
+      return {
+        code: 0,
+        message: "No authenticated user found."
+      };
+    }
+
+    const update_session = await updateSession(req.server, null, req.currentUser.id);
+    if(update_session.code !== 1) {
+      return {
+        code: 0,
+        message: update_session.message || "Session update failed."
+      };
+    }
+
+    return {
+      code: 1,
+      data: {},
+      message: "User logged out successfully."
+    };
+
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? `${error.message} "LogoutService Unknown error"`
+        : "LogoutService Unknown error";
+
+    return {
+      code: 0,
+      message
+    };
+  }
+}
+
 module.exports = { 
   AuthService,
   GetUserService,
-  GetLanguageService
+  GetLanguageService,
+  LogoutService
 };

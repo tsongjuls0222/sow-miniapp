@@ -1,10 +1,10 @@
-const { AuthService, GetUserService, GetLanguageService } = require("../services/auth.service");
+const { AuthService, GetUserService, GetLanguageService, LogoutService } = require("../services/auth.service");
 
 async function LoginController(req, response) {
   try {
     const auth_service = await AuthService(req);
     if(!auth_service || auth_service.code !== 1) {
-      return response.code(401).send({
+      return response.code(400).send({
         code: 0,
         message: auth_service?.message ?? "Login Failed"
       });
@@ -84,8 +84,37 @@ async function GetLanguageController(req, response) {
   }
 }
 
+async function LogoutController(req, response) {
+  try {
+    const auth_service = await LogoutService(req);
+    if(!auth_service || auth_service.code !== 1) {
+      return response.code(400).send({
+        code: 0,
+        message: auth_service?.message ?? "Logout Failed"
+      });
+    }
+
+    return response.code(200).send({
+      code: 1,
+      data: auth_service.data,
+      message: "Logout Success"
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "LogoutController Unknown error";
+
+    return response.code(500).send({
+      code: 0,
+      message
+    });
+  }
+}
+
 module.exports = {
   LoginController,
   GetUserController,
-  GetLanguageController
+  GetLanguageController,
+  LogoutController
 };

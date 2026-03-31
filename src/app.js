@@ -4,9 +4,10 @@ const dotenv = require("dotenv");
 const { rateLimitPlugin } = require("./plugins/rateLimit");
 const corsPlugin = require("./plugins/cors");
 const helmetPlugin = require("./plugins/helmet");
-const authRoutes = require("./routes/auth.route");
 const dbPlugin = require("./plugins/db");
 const jwtPlugin = require("./plugins/jwt");
+const authRoutes = require("./routes/auth.route");
+const productRoutes = require("./routes/product.route");
 
 if (process.env.NODE_ENV === "production") {
   dotenv.config({ path: ".env.production" });
@@ -30,6 +31,7 @@ function buildApp() {
   app.register(jwtPlugin);
 
   app.register(authRoutes, { prefix: "/api/v1/auth" });
+  app.register(productRoutes, { prefix: "/api/v1/product" });
 
   app.setErrorHandler((error, req, reply) => {
     req.log.error({ err: error }, "unhandled_error");
