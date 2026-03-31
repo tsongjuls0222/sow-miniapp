@@ -3,10 +3,7 @@ const cors = require("@fastify/cors");
 
 async function corsPlugin(app) {
   await app.register(cors, {
-    origin: [
-      "http://localhost:5173",
-      "https://main.d1nmregmm9djjc.amplifyapp.com"
-    ],
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
