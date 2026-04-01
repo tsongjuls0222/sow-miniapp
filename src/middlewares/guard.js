@@ -14,23 +14,16 @@ function authGuard(required = true) {
             });
         }
 
-        const decoded = await req.jwtVerify();
-        if(!decoded || !decoded.id || !decoded.email) {
+        const decoded = await req.server.verifyAccessToken(token);
+        console.log("Decoded token:", decoded);
+        if(!decoded || !decoded.userId || !decoded.email || !decoded.sessionId) {
             return reply.status(401).send({
                 code: 0,
                 message: "Invalid token payload",
             });
         }
 
-        const user = await findUserByIdToken(req.server, decoded.id, token);
-        if (!user) {
-            return reply.status(401).send({
-                code: 0,
-                message: "user not found",
-            });
-        }
-
-        req.currentUser = user;
+        req.currentUser = decoded;
 
     } catch (error) {
       req.log.error({ error }, "authGuard failed");

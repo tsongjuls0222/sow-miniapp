@@ -1,4 +1,4 @@
-const { AuthService, GetUserService, GetLanguageService, LogoutService } = require("../services/auth.service");
+const { AuthService, GetUserService, GetLanguageService, LogoutService, RefreshService } = require("../services/auth.service");
 
 async function LoginController(req, response) {
   try {
@@ -10,9 +10,48 @@ async function LoginController(req, response) {
       });
     }
 
+
+    response.setCookie("refreshToken", auth_service.data.refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/"
+    });
     return response.code(200).send({
       code: 1,
-      data: auth_service.data,
+      data: {
+        token : auth_service.data.accessToken
+      },
+      message: "Login Success"
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "LoginController Unknown error";
+
+    return response.code(500).send({
+      code: 0,
+      message
+    });
+  }
+}
+
+async function RefreshController(req, response) {
+  try {
+    const refresh_service = await RefreshService(req);
+    if(!refresh_service || refresh_service.code !== 1) {
+      return response.code(400).send({
+        code: 0,
+        message: refresh_service?.message ?? "Login Failed"
+      });
+    }
+
+    return response.code(200).send({
+      code: 1,
+      data: {
+        accessToken : refresh_service.data.accessToken
+      },
       message: "Login Success"
     });
   } catch (error) {
@@ -84,28 +123,43 @@ async function GetLanguageController(req, response) {
   }
 }
 
-async function LogoutController(req, response) {
+async function LogoutController(req, reply) {
   try {
-    const auth_service = await LogoutService(req);
-    if(!auth_service || auth_service.code !== 1) {
-      return response.code(400).send({
+    const logout_service = await LogoutService(req);
+
+    reply.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/"
+    });
+
+    if (!logout_service || logout_service.code !== 1) {
+      return reply.code(400).send({
         code: 0,
-        message: auth_service?.message ?? "Logout Failed"
+        message: logout_service?.message ?? "Logout Failed"
       });
     }
 
-    return response.code(200).send({
+    return reply.code(200).send({
       code: 1,
-      data: auth_service.data,
+      data: logout_service.data ?? null,
       message: "Logout Success"
     });
   } catch (error) {
+    reply.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/"
+    });
+
     const message =
       error instanceof Error
         ? error.message
         : "LogoutController Unknown error";
 
-    return response.code(500).send({
+    return reply.code(500).send({
       code: 0,
       message
     });
@@ -116,5 +170,6 @@ module.exports = {
   LoginController,
   GetUserController,
   GetLanguageController,
-  LogoutController
+  LogoutController,
+  RefreshController
 };

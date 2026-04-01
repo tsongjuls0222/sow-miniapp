@@ -1,20 +1,14 @@
 const bcrypt = require("bcrypt");
-const { findUser, updateSession, findLanguage } = require("../repositories/auth.repository");
+const crypto = require("crypto");
+const { findUser, updateSession, findLanguage, findUserById } = require("../repositories/auth.repository");
+const { createSession, findActiveSession, deactivateSession } = require("../repositories/session.repository");
 
 async function AuthService(req) {
   try {
     const _body = req.body;
-    const salt_rounds = Number(process.env.SALT_ROUNDS);
-    const hashed_password = await bcrypt.hash(_body.password, salt_rounds);
-    if(!hashed_password) {
-      return {
-        code: 0,
-        message: "Password hashing failed"
-      };
-    }
 
-    const find_user = await findUser(req.server, _body.email, hashed_password);
-    if(!find_user) {
+    const find_user = await findUser(req.server, _body.email);
+    if (!find_user) {
       return {
         code: 0,
         message: "User not found."
@@ -22,39 +16,132 @@ async function AuthService(req) {
     }
 
     const isMatch = await bcrypt.compare(_body.password, find_user.password);
-    if(!isMatch) {
+    if (!isMatch) {
       return {
         code: 0,
         message: "Invalid credentials."
       };
     }
 
-    const token = req.server.generateToken({id: find_user.id, email: find_user.email, status: find_user.status});
-    if(!token) {
-      return {
-        code: 0,
-        message: "Token generation failed."
-      };
-    }
+    const sessionId = crypto.randomUUID();
 
-    const update_session = await updateSession(req.server, token, find_user.id);
-    if(update_session.code !== 1) {
+    const accessToken = req.server.generateAccessToken(
+      {
+        id: find_user.id,
+        email: find_user.email
+      },
+      sessionId
+    );
+
+    const refreshToken = req.server.generateRefreshToken(
+      {
+        id: find_user.id,
+        email: find_user.email
+      },
+      sessionId
+    );
+
+    const create_session = await createSession(req.server, {
+      user_id: find_user.id,
+      session_id: sessionId,
+      refresh_token: refreshToken
+    });
+
+    if (!create_session) {
       return {
         code: 0,
-        message: update_session.message || "Session update failed."
+        message: "Session creation failed."
       };
     }
 
     return {
       code: 1,
-      data: { token }
+      data: {
+        refreshToken,
+        accessToken,
+        find_user
+      }
     };
-
   } catch (error) {
     const message =
       error instanceof Error
-        ? `${error.message} "AuthService Unknown error"`
+        ? `${error.message} AuthService Unknown error`
         : "AuthService Unknown error";
+
+    return {
+      code: 0,
+      message
+    };
+  }
+}
+
+async function RefreshService(req) {
+  try {
+    const rToken = req.cookies.refreshToken;
+
+    if (!rToken) {
+      return {
+        code: 0,
+        message: "Refresh token not found"
+      };
+    }
+
+    const decodedRefreshToken = await req.server.verifyRefreshToken(rToken);
+    if (!decodedRefreshToken) {
+      return {
+        code: 0,
+        message: "Invalid refresh token."
+      };
+    }
+
+    const find_session = await findActiveSession(req.server, {
+      user_id: decodedRefreshToken.userId,
+      session_id: decodedRefreshToken.sessionId
+    });
+
+    if (!find_session) {
+      return {
+        code: 0,
+        message: "Session not found or inactive."
+      };
+    }
+
+    if (find_session.refresh_token !== rToken) {
+      return {
+        code: 0,
+        message: "Refresh token mismatch."
+      };
+    }
+
+    const find_user = await findUserById(req.server, { id:decodedRefreshToken.userId });
+    if (!find_user) {
+      return {
+        code: 0,
+        message: "User not found."
+      };
+    }
+    
+
+    const newAccessToken = req.server.generateAccessToken(
+      {
+        id: find_user.id,
+        email: find_user.email
+      },
+      decodedRefreshToken.sessionId
+    );
+
+    return {
+      code: 1,
+      data: {
+        accessToken: newAccessToken
+      },
+      message: "Token refreshed successfully"
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? `${error.message} RefreshService Unknown error`
+        : "RefreshService Unknown error";
 
     return {
       code: 0,
@@ -123,31 +210,46 @@ async function GetLanguageService(req) {
 
 async function LogoutService(req) {
   try {
-    if(!req.currentUser) {
+    const rToken = req.cookies.refreshToken;
+
+    if (!rToken) {
       return {
-        code: 0,
-        message: "No authenticated user found."
+        code: 1,
+        data: null,
+        message: "Already logged out"
       };
     }
 
-    const update_session = await updateSession(req.server, null, req.currentUser.id);
-    if(update_session.code !== 1) {
+    const decodedRefreshToken = await req.server.verifyRefreshToken(rToken);
+
+    if (!decodedRefreshToken) {
       return {
         code: 0,
-        message: update_session.message || "Session update failed."
+        message: "Invalid refresh token."
+      };
+    }
+
+    const deactivated = await deactivateSession(req.server, {
+      user_id: decodedRefreshToken.userId,
+      session_id: decodedRefreshToken.sessionId
+    });
+
+    if (!deactivated) {
+      return {
+        code: 0,
+        message: "Session not found or already inactive."
       };
     }
 
     return {
       code: 1,
-      data: {},
-      message: "User logged out successfully."
+      data: null,
+      message: "Logout successful"
     };
-
   } catch (error) {
     const message =
       error instanceof Error
-        ? `${error.message} "LogoutService Unknown error"`
+        ? `${error.message} LogoutService Unknown error`
         : "LogoutService Unknown error";
 
     return {
@@ -161,5 +263,6 @@ module.exports = {
   AuthService,
   GetUserService,
   GetLanguageService,
-  LogoutService
+  LogoutService,
+  RefreshService
 };

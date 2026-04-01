@@ -6,6 +6,7 @@ const corsPlugin = require("./plugins/cors");
 const helmetPlugin = require("./plugins/helmet");
 const dbPlugin = require("./plugins/db");
 const jwtPlugin = require("./plugins/jwt");
+const cookiePlugin = require("./plugins/cookie");
 const authRoutes = require("./routes/auth.route");
 const productRoutes = require("./routes/product.route");
 
@@ -29,6 +30,7 @@ function buildApp() {
   app.register(rateLimitPlugin);
   app.register(dbPlugin);
   app.register(jwtPlugin);
+  app.register(cookiePlugin);
 
   app.register(authRoutes, { prefix: "/api/v1/auth" });
   app.register(productRoutes, { prefix: "/api/v1/product" });
