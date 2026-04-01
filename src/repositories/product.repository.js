@@ -64,6 +64,8 @@ async function findAllProduct(app, data) {
       values.push(`%${data.name}%`);
     }
 
+    query += ` ORDER BY id DESC`;
+
     const { rows } = await app.db.query(query, values);
     return rows ?? [];
   } catch (error) {

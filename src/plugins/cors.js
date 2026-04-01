@@ -4,7 +4,7 @@ const cors = require("@fastify/cors");
 async function corsPlugin(app) {
   await app.register(cors, {
     origin: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
   });
