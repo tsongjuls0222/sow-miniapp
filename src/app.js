@@ -9,6 +9,7 @@ const jwtPlugin = require("./plugins/jwt");
 const cookiePlugin = require("./plugins/cookie");
 const authRoutes = require("./routes/auth.route");
 const productRoutes = require("./routes/product.route");
+const languageRoutes = require("./routes/language.route");
 
 if (process.env.NODE_ENV === "production") {
   dotenv.config({ path: ".env.production" });
@@ -34,6 +35,7 @@ function buildApp() {
 
   app.register(authRoutes, { prefix: "/api/v1/auth" });
   app.register(productRoutes, { prefix: "/api/v1/product" });
+  app.register(languageRoutes, { prefix: "/api/v1/language" });
 
   app.setErrorHandler((error, req, reply) => {
     req.log.error({ err: error }, "unhandled_error");
