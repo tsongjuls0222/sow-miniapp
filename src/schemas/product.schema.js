@@ -33,8 +33,7 @@ const addProductSchema = Joi.object({
     .default(0),
 
   description: Joi.string()
-    .allow(null, "")
-    .optional()
+    .required()
 });
 
 const updateProductSchema = Joi.object({
@@ -69,8 +68,7 @@ const updateProductSchema = Joi.object({
     .optional(),
 
   description: Joi.string()
-    .allow(null, "")
-    .optional()
+    .required()
 });
 
 const getProductSchema = Joi.object({

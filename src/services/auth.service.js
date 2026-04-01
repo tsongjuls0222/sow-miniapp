@@ -159,9 +159,19 @@ async function GetUserService(req) {
       };
     }
 
+    const find_user = await findUserById(req.server, { id: req.currentUser.userId });
+    if (!find_user) {
+      return {
+        code: 0,
+        message: "User not found."
+      };
+    } 
+
     return {
       code: 1,
-      data: req.currentUser,
+      data: {
+        user :  find_user
+      },
       message: "User retrieved successfully."
     };
 
