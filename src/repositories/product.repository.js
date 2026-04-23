@@ -60,7 +60,7 @@ async function findAllProduct(app, data) {
     }
 
     if (data.name) {
-      query += ` AND name ILIKE $${index++}`; // better for search
+      query += ` AND name ILIKE $${index++}`;
       values.push(`%${data.name}%`);
     }
 
